@@ -12,7 +12,7 @@ jobs:
       - name: Publish Server to Github Registry
         uses: docker/build-push-action@v1
         with:
-          repository: mrturkmencom/wg/wireguard-service
+          repository: aau-network-security/gwireguard/wireguard-service
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
           registry: docker.pkg.github.com
@@ -22,8 +22,8 @@ jobs:
       - name: Publish server to dockerhub
         uses: docker/build-push-action@v1
         with:
-          repository: mrturkmen/wireguard-service
-          username: ${{ secrets.DOCKER_USERNAME }}
+          repository: aaunetworksecurity/wireguard-service
+          username: aaunetworksecurity
           password: ${{ secrets.DOCKER_H_PASSWORD }}
           tag_with_ref: true
           tag_with_sha: true
