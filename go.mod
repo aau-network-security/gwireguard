@@ -1,4 +1,4 @@
-module github.com/mrturkmencom/wg
+module github.com/aau-network-security/gwireguard
 
 go 1.13
 

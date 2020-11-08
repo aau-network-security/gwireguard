@@ -12,7 +12,7 @@ import (
 
 	"github.com/rs/zerolog/log"
 
-	"github.com/mrturkmencom/wg/config"
+	"github.com/aau-network-security/gwireguard/config"
 )
 
 // add gRPC connection

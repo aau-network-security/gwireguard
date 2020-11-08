@@ -7,12 +7,12 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/mrturkmencom/wg/config"
+	"github.com/aau-network-security/gwireguard/config"
 
 	"google.golang.org/grpc/reflection"
 
-	proto "github.com/mrturkmencom/wg/proto"
-	"github.com/mrturkmencom/wg/vpn"
+	proto "github.com/aau-network-security/gwireguard/proto"
+	wg "github.com/aau-network-security/gwireguard/vpn"
 )
 
 var (

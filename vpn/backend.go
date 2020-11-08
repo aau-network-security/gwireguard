@@ -14,11 +14,11 @@ import (
 
 	"google.golang.org/grpc/credentials"
 
-	"github.com/mrturkmencom/wg/config"
+	"github.com/aau-network-security/gwireguard/config"
 
 	"google.golang.org/grpc"
 
-	pb "github.com/mrturkmencom/wg/proto"
+	pb "github.com/aau-network-security/gwireguard/proto"
 )
 
 type wireguard struct {

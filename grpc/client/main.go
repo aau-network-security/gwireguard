@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"log"
 
+	wg "github.com/aau-network-security/gwireguard/proto"
 	"github.com/dgrijalva/jwt-go"
-	wg "github.com/mrturkmencom/wg/proto"
 
 	"google.golang.org/grpc"
 )
