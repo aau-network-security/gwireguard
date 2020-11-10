@@ -30,12 +30,12 @@ type wireguard struct {
 func (w *wireguard) InitializeI(ctx context.Context, r *pb.IReq) (*pb.IResp, error) {
 
 	log.Info().Msgf("Initializing interface for %s ", r.IName)
-	privKey, err := generatePrivateKey(w.config.WgInterface.Dir + r.IName + "_priv")
+	privKey, err := generatePrivateKey(w.config.WgConfig.Dir + r.IName + "_priv")
 	if err != nil {
 		return &pb.IResp{}, err
 	}
-	log.Info().Msgf("Private key is generated %s with name %s", w.config.WgInterface.Dir, r.IName)
-	if err := generatePublicKey(ctx, w.config.WgInterface.Dir+r.IName+"_priv", w.config.WgInterface.Dir+r.IName+"_pub"); err != nil {
+	log.Info().Msgf("Private key is generated %s with name %s", w.config.WgConfig.Dir, r.IName)
+	if err := generatePublicKey(ctx, w.config.WgConfig.Dir+r.IName+"_priv", w.config.WgConfig.Dir+r.IName+"_pub"); err != nil {
 		return &pb.IResp{}, err
 	}
 
@@ -47,7 +47,7 @@ func (w *wireguard) InitializeI(ctx context.Context, r *pb.IReq) (*pb.IResp, err
 		saveConfig: r.SaveConfig,
 		iName:      r.IName,
 	}
-	out, err := genInterfaceConf(wgI, w.config.WgInterface.Dir)
+	out, err := genInterfaceConf(wgI, w.config.WgConfig.Dir)
 	if err != nil {
 		return &pb.IResp{Message: out}, err
 	}
@@ -133,29 +133,29 @@ func (w *wireguard) ListPeers(ctx context.Context, r *pb.ListPeersReq) (*pb.List
 // GenPrivateKey generates PrivateKey for wireguard interface
 func (w *wireguard) GenPrivateKey(ctx context.Context, r *pb.PrivKeyReq) (*pb.PrivKeyResp, error) {
 
-	_, err := generatePrivateKey(w.config.WgInterface.Dir + r.PrivateKeyName + "_priv")
+	_, err := generatePrivateKey(w.config.WgConfig.Dir + r.PrivateKeyName + "_priv")
 	if err != nil {
 		return &pb.PrivKeyResp{}, err
 	}
 	log.Info().Msgf("GenPrivateKey is called to generate new private key with filename %s", r.PrivateKeyName)
-	return &pb.PrivKeyResp{Message: "Private Key is created with name " + w.config.WgInterface.Dir + r.PrivateKeyName}, nil
+	return &pb.PrivKeyResp{Message: "Private Key is created with name " + w.config.WgConfig.Dir + r.PrivateKeyName}, nil
 }
 
 // GenPublicKey generates PublicKey for wireguard interface
 func (w *wireguard) GenPublicKey(ctx context.Context, r *pb.PubKeyReq) (*pb.PubKeyResp, error) {
 	// check whether private key exists or not, if not generate one
-	if _, err := os.Stat(w.config.WgInterface.Dir + r.PrivKeyName + "_pub"); os.IsNotExist(err) {
+	if _, err := os.Stat(w.config.WgConfig.Dir + r.PrivKeyName + "_pub"); os.IsNotExist(err) {
 		fmt.Printf("PrivateKeyFile is not exists, creating one ... %s\n", r.PrivKeyName)
-		_, err := generatePrivateKey(w.config.WgInterface.Dir + r.PrivKeyName + "_priv")
+		_, err := generatePrivateKey(w.config.WgConfig.Dir + r.PrivKeyName + "_priv")
 		if err != nil {
 			return &pb.PubKeyResp{Message: "Error"}, fmt.Errorf("error in generation of private key %v", err)
 		}
 	}
 
-	if err := generatePublicKey(ctx, w.config.WgInterface.Dir+r.PrivKeyName+"_priv", w.config.WgInterface.Dir+r.PubKeyName+"_pub"); err != nil {
+	if err := generatePublicKey(ctx, w.config.WgConfig.Dir+r.PrivKeyName+"_priv", w.config.WgConfig.Dir+r.PubKeyName+"_pub"); err != nil {
 		return &pb.PubKeyResp{}, err
 	}
-	return &pb.PubKeyResp{Message: "Public key is generated with " + w.config.WgInterface.Dir + r.PubKeyName + " name"}, nil
+	return &pb.PubKeyResp{Message: "Public key is generated with " + w.config.WgConfig.Dir + r.PubKeyName + " name"}, nil
 }
 
 // GetPublicKey returns content of given PublicKey
@@ -181,17 +181,17 @@ func (w *wireguard) GetPrivateKey(ctx context.Context, req *pb.PrivKeyReq) (*pb.
 	return &pb.PrivKeyResp{Message: out}, nil
 }
 
-func GetCreds(conf config.CertConfig) (credentials.TransportCredentials, error) {
+func GetCreds(conf config.Config) (credentials.TransportCredentials, error) {
 	log.Printf("Preparing credentials for RPC")
 
-	certificate, err := tls.LoadX509KeyPair(conf.CertFile, conf.CertKey)
+	certificate, err := tls.LoadX509KeyPair(conf.ServiceConfig.TLS.CertFile, conf.ServiceConfig.TLS.CertKey)
 	if err != nil {
 		return nil, fmt.Errorf("could not load server key pair: %s", err)
 	}
 
 	// Create a certificate pool from the certificate authority
 	certPool := x509.NewCertPool()
-	ca, err := ioutil.ReadFile(conf.CAFile)
+	ca, err := ioutil.ReadFile(conf.ServiceConfig.TLS.CAFile)
 	if err != nil {
 		return nil, fmt.Errorf("could not read ca certificate: %s", err)
 	}
@@ -212,10 +212,10 @@ func GetCreds(conf config.CertConfig) (credentials.TransportCredentials, error) 
 }
 
 // SecureConn enables communication over secure channel
-func SecureConn(conf config.CertConfig) ([]grpc.ServerOption, error) {
-	if conf.Enabled {
-		log.Info().Msgf("Conf cert-file: %s, cert-key: %s ca: %s", conf.CertFile, conf.CertKey, conf.CAFile)
-		creds, err := GetCreds(conf)
+func SecureConn(conf *config.Config) ([]grpc.ServerOption, error) {
+	if conf.ServiceConfig.TLS.Enabled {
+		log.Info().Msgf("Conf cert-file: %s, cert-key: %s ca: %s", conf.ServiceConfig.TLS.CertFile, conf.ServiceConfig.TLS.CertKey, conf.ServiceConfig.TLS.CAFile)
+		creds, err := GetCreds(*conf)
 
 		if err != nil {
 			return []grpc.ServerOption{}, errors.New("Error on retrieving certificates: " + err.Error())
@@ -229,7 +229,7 @@ func SecureConn(conf config.CertConfig) ([]grpc.ServerOption, error) {
 func InitServer(conf *config.Config) (*wireguard, error) {
 
 	gRPCServer := &wireguard{
-		auth:   NewAuthenticator(conf.GrpcConfig.Auth.SKey, conf.GrpcConfig.Auth.AKey),
+		auth:   NewAuthenticator(conf.ServiceConfig.Auth.SKey, conf.ServiceConfig.Auth.AKey),
 		config: conf,
 	}
 	return gRPCServer, nil
