@@ -1,60 +1,50 @@
 package config
 
 import (
-	"fmt"
-	"runtime"
+	"io/ioutil"
 
-	"github.com/spf13/viper"
-)
-
-var (
-	configuration *Config
-	_, b, _, _    = runtime.Caller(0)
-	//configurationDirectory = filepath.Join(filepath.Dir(b))
+	"github.com/rs/zerolog/log"
+	"gopkg.in/yaml.v2"
 )
 
 type Config struct {
-	WgInterface WgConfig
-	GrpcConfig  ConnConfig
+	WgConfig struct {
+		Eth string `yaml:"eth"`
+		Dir string `yaml:"dir"`
+	} `yaml:"wireguard-config"`
+	ServiceConfig struct {
+		Domain struct {
+			Endpoint string `yaml:"endpoint"`
+			Port     uint   `yaml:"port"`
+		} `yaml:"domain"`
+		TLS struct {
+			Enabled  bool   `yaml:"enabled"`
+			CertFile string `yaml:"certFile"`
+			CertKey  string `yaml:"certKey"`
+			CAFile   string `yaml:"caFile"`
+
+			Directory string `yaml:"directory"`
+		} `yaml:"tls"`
+		Auth struct {
+			AKey string `yaml:"aKey"`
+			SKey string `yaml:"sKey"`
+		} `yaml:"auth"`
+	} `yaml:"service-config"`
 }
 
-type WgConfig struct {
-	Eth string
-	Dir string
-}
+func NewConfig(path string) (*Config, error) {
+	f, err := ioutil.ReadFile(path)
 
-type ConnConfig struct {
-	Domain struct {
-		Endpoint string
-		Port     uint
-	}
-	Tls  CertConfig
-	Auth struct {
-		AKey string
-		SKey string
-	}
-}
-
-type CertConfig struct {
-	Enabled   bool
-	Directory string
-	CertFile  string
-	CertKey   string
-	CAFile    string
-}
-
-func InitializeConfig(configPath string) (*Config, error) {
-	viper.AddConfigPath(configPath)
-	viper.SetConfigType("yaml")
-	err := viper.ReadInConfig()
 	if err != nil {
-		fmt.Println("fatal error config file: config \n ", err)
+		log.Error().Msgf("Reading config file err: %v", err)
 		return nil, err
 	}
-	err = viper.Unmarshal(&configuration)
+
+	var c Config
+	err = yaml.Unmarshal(f, &c)
 	if err != nil {
-		fmt.Println("Unmarshalling fatal error config file: config \n ", err)
+		log.Error().Msgf("Unmarshall error %v \n", err)
 		return nil, err
 	}
-	return configuration, nil
+	return &c, nil
 }
