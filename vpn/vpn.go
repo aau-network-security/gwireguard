@@ -28,7 +28,7 @@ const (
 
 var (
 	// todo: fix configuration variables
-	configuration, _ = config.InitializeConfig(os.Getenv("CONFIG_PATH"))
+	configuration, _ = config.NewConfig(os.Getenv("CONFIG_PATH"))
 )
 
 type Interface struct {
@@ -186,7 +186,7 @@ func generatePrivateKey(privateKeyName string) (string, error) {
 
 // getContent returns content of privateKey or publicKey depending on keyName
 func getContent(keyName string) (string, error) {
-	out, err := ioutil.ReadFile(configuration.WgInterface.Dir + keyName)
+	out, err := ioutil.ReadFile(configuration.WgConfig.Dir + keyName)
 	if err != nil {
 		return "", fmt.Errorf("could not read the file %s err: %v", keyName, err)
 	}
@@ -200,19 +200,19 @@ func genInterfaceConf(i Interface, confPath string) (string, error) {
 	downRule := "iptables -D FORWARD -i %i -j ACCEPT; iptables -A FORWARD -o %i -j ACCEPT;"
 	wgConf := fmt.Sprintf(
 		`
-[Interface]
-Address = %s
-ListenPort = %d
-SaveConfig = %v
-PrivateKey = %s
-PostUp = %siptables -t nat -A POSTROUTING -o %s -j MASQUERADE
-PostDown = %siptables -t nat -D POSTROUTING -o %s -j MASQUERADE`, i.address, i.listenPort, i.saveConfig, i.privateKey,
+		[Interface]
+		Address = %s
+		ListenPort = %d
+		SaveConfig = %v
+		PrivateKey = %s
+		PostUp = %siptables -t nat -A POSTROUTING -o %s -j MASQUERADE
+		PostDown = %siptables -t nat -D POSTROUTING -o %s -j MASQUERADE`, i.address, i.listenPort, i.saveConfig, i.privateKey,
 		upRule, i.eth, downRule, i.eth)
 
 	if err := writeToFile(confPath+i.iName+".conf", wgConf); err != nil {
 		return "GenInterface Error:  ", err
 	}
-	return i.iName + " configuration saved to " + configuration.WgInterface.Dir, nil
+	return i.iName + " configuration saved to " + configuration.WgConfig.Dir, nil
 }
 
 func WireGuardCmd(cmd string) ([]byte, error) {

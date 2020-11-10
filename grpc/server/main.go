@@ -20,11 +20,14 @@ var (
 )
 
 func main() {
-	configuration, err := config.InitializeConfig(configPath)
+	if configPath == "" {
+		panic("Set CONFIG_PATH environment variable correctly ! ")
+	}
+	configuration, err := config.NewConfig(configPath)
 	if err != nil {
 		panic("Configuration initialization error: " + err.Error())
 	}
-	port := strconv.FormatUint(uint64(configuration.GrpcConfig.Domain.Port), 10)
+	port := strconv.FormatUint(uint64(configuration.ServiceConfig.Domain.Port), 10)
 
 	lis, err := net.Listen("tcp", ":"+port)
 	if err != nil {
@@ -35,7 +38,7 @@ func main() {
 	if err != nil {
 		return
 	}
-	opts, err := wg.SecureConn(configuration.GrpcConfig.Tls)
+	opts, err := wg.SecureConn(configuration)
 	if err != nil {
 		log.Fatalf("failed to retrieve secure options %s", err.Error())
 	}

@@ -1,9 +1,9 @@
-WgInterface:
+wireguard-config:
   eth: eth0
   # dir is the place where configuration files of wg are located.
   dir: /etc/wireguard/
 
-GrpcConfig:
+service-config:
   domain:
     endpoint: localhost
     port: 5353
