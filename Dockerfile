@@ -8,6 +8,5 @@ RUN CGO_ENABLED=0 GOOS=linux go build -o app -a -ldflags '-w -extldflags "-stati
 FROM alpine
 WORKDIR /app
 RUN apk update && apk add sudo && apk add iptables && apk add -U wireguard-tools
-COPY --from=builder /wg/config/config.yml /app/config.yml
 COPY --from=builder /wg/app /app/app
 ENTRYPOINT ["/app/app"]
