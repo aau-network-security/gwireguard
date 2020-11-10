@@ -13,7 +13,7 @@ jobs:
         uses: docker/build-push-action@v1
         with:
           repository: aau-network-security/gwireguard/wireguard-service
-          username: ${{ github.actor }}
+          username: aau-network-security
           password: ${{ secrets.GITHUB_TOKEN }}
           registry: docker.pkg.github.com
           tag_with_ref: true
