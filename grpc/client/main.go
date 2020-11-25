@@ -27,6 +27,8 @@ func (c Creds) RequireTransportSecurity() bool {
 }
 
 func main() {
+	// change the endpoint address with your instance ip
+	endpointAddress := "130.226.98.170"
 	var conn *grpc.ClientConn
 	// wg is AUTH_KEY from vpn/auth.go
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
@@ -45,81 +47,81 @@ func main() {
 		grpc.WithInsecure(),
 		grpc.WithPerRPCCredentials(authCreds))
 
-	conn, err = grpc.Dial(":5353", dialOpts...)
+	conn, err = grpc.Dial(fmt.Sprintf("%s:5353", endpointAddress), dialOpts...)
 	if err != nil {
 		log.Fatalf("did not connect: %v", err)
+	}
+	if err == nil {
+		fmt.Printf("Client is connected successfully !")
 	}
 	defer conn.Close()
 
 	client := wg.NewWireguardClient(conn)
-	//privatekey generation example
-	privKeyResp, err := client.GenPrivateKey(context.Background(), &wg.PrivKeyReq{PrivateKeyName: "random_privatekey"})
-	if err != nil {
-		fmt.Println(fmt.Sprintf("Error happened in creating private key %v", err))
-		panic(err)
-	}
-	fmt.Println(privKeyResp.Message)
+	ctx := context.TODO()
 
-	// publickey generation example
-	publicKeyResp, err := client.GenPublicKey(context.Background(), &wg.PubKeyReq{PrivKeyName: "random_privatekey", PubKeyName: "random_publickey"})
-	if err != nil {
-		fmt.Println(fmt.Sprintf("Error happened in creating public key %s", err.Error()))
-		//panic(err)
-	}
-	if publicKeyResp != nil {
-		fmt.Println(publicKeyResp.Message)
-	}
-
-	privateKey, err := client.GetPrivateKey(context.Background(), &wg.PrivKeyReq{PrivateKeyName: "random_privatekey"})
-	if err != nil {
-		fmt.Println(fmt.Sprintf("Get content of private key error %s", err.Error()))
-		//panic(err)
-	}
-	if privateKey != nil {
-		fmt.Println(privateKey.Message)
-	}
-
-	publicKey, err := client.GetPublicKey(context.Background(), &wg.PubKeyReq{PubKeyName: "random_publickey"})
-	if err != nil {
-		fmt.Println(fmt.Sprintf("Get content of public key error %s", err.Error()))
-		//panic(err)
-	}
-	if publicKey != nil {
-		fmt.Println(publicKey.Message)
-	}
-
-	// insert content of privatekey in to initInterface
-	interfaceGenResp, err := client.InitializeI(context.Background(), &wg.IReq{
-		Address:    "10.0.2.1/24",
-		ListenPort: 4000,
+	_, err = client.InitializeI(ctx, &wg.IReq{
+		Address:    "10.2.11.1/24", // this should be randomized and should not collide with lab subnet like 124.5.6.0/24
+		ListenPort: 51820,          // this should be randomized and should not collide with any used ports by host
 		SaveConfig: true,
-		PrivateKey: privateKey.Message,
 		Eth:        "eth0",
-		IName:      "wg1",
+		IName:      "wg",
 	})
 	if err != nil {
-		fmt.Println(fmt.Sprintf(" Initializing interface error %v", err.Error()))
-
-	}
-	if interfaceGenResp != nil {
-		fmt.Println(interfaceGenResp.Message)
-	}
-
-	nicInfoResp, err := client.GetNICInfo(context.Background(), &wg.NICInfoReq{Interface: "wg1"})
-	if err != nil {
-		fmt.Println(fmt.Sprintf("Getting information of interface error %s", err.Error()))
 		panic(err)
 	}
-	if nicInfoResp != nil {
-		fmt.Println(nicInfoResp.Message)
-	}
 
-	downI, err := client.ManageNIC(context.Background(), &wg.ManageNICReq{Cmd: "down", Nic: "wg1"})
+	//log.Info().Msg("Getting server public key...")
+	serverPubKey, err := client.GetPublicKey(ctx, &wg.PubKeyReq{PubKeyName: "wg", PrivKeyName: "wg"})
 	if err != nil {
-		fmt.Println(fmt.Sprintf("down interface is failed %s", err.Error()))
 		panic(err)
 	}
-	fmt.Println(downI.Message)
 
-	//resp, err := client.GenPublicKey(context.Background(), &wg.PrivKeyReq{})
+	resp, err := client.GenPublicKey(ctx, &wg.PubKeyReq{
+		PubKeyName:  "client1",
+		PrivKeyName: "client1",
+	})
+	if err != nil {
+		panic(err)
+	}
+	fmt.Printf(resp.Message)
+	_, err = client.GenPrivateKey(ctx, &wg.PrivKeyReq{PrivateKeyName: "client1"})
+	if err != nil {
+		panic(err)
+	}
+	_, err = client.GetPublicKey(ctx, &wg.PubKeyReq{PubKeyName: "client1"})
+	if err != nil {
+		panic(err)
+	}
+	clientPrivKey, err := client.GetPrivateKey(ctx, &wg.PrivKeyReq{PrivateKeyName: "client1"})
+	if err != nil {
+		panic(err)
+	}
+
+	peerIP := "10.2.11.3/32"
+
+	_, err = client.AddPeer(ctx, &wg.AddPReq{
+		Nic:        "wg",
+		AllowedIPs: peerIP,
+		PublicKey:  resp.Message,
+	})
+	if err != nil {
+		panic(err)
+	}
+
+	// change allowed ips according to vlan ip that you would like to connect
+
+	allowedIps := "10.34.204.1/24"
+	clientConfig := fmt.Sprintf(
+		`[Interface]
+Address = %s
+PrivateKey = %s
+DNS = 1.1.1.1
+MTU = 1500
+[Peer]
+PublicKey = %s
+AllowedIps = %s
+Endpoint =  %s
+PersistentKeepalive = 25`, peerIP, clientPrivKey.Message, serverPubKey.Message, allowedIps, fmt.Sprintf("%s:51820", endpointAddress))
+
+	fmt.Printf("Client Config \n %s ", clientConfig)
 }
