@@ -1,0 +1,23 @@
+[Unit]
+Description=Wireguard gRPC Service
+ConditionPathExists=/home/vagrant
+After=network.target
+
+[Service]
+Type=simple
+User=vagrant
+Group=vagrant
+LimitNOFILE=1024
+
+Restart=on-failure
+RestartSec=10
+
+WorkingDirectory=/home/vagrant
+ExecStart=/home/vagrant/wg-server
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=wg-server
+
+[Install]
+WantedBy=multi-user.target
