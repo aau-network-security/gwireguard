@@ -60,11 +60,12 @@ func main() {
 	ctx := context.TODO()
 
 	_, err = client.InitializeI(ctx, &wg.IReq{
-		Address:    "10.2.11.1/24", // this should be randomized and should not collide with lab subnet like 124.5.6.0/24
-		ListenPort: 51820,          // this should be randomized and should not collide with any used ports by host
-		SaveConfig: true,
-		Eth:        "eth0",
-		IName:      "wg",
+		Address:            "10.2.11.1/24", // this should be randomized and should not collide with lab subnet like 124.5.6.0/24
+		ListenPort:         51820,          // this should be randomized and should not collide with any used ports by host
+		SaveConfig:         true,
+		Eth:                "eth0",
+		IName:              "wg",
+		DownInterfacesFile: "/etc/network/downinterfaces",
 	})
 	if err != nil {
 		panic(err)
@@ -105,9 +106,7 @@ func main() {
 		panic(err)
 	}
 
-	// change allowed ips according to vlan ip that you would like to connect
-
-	allowedIps := "10.134.130.1/24"
+	allowedIps := "10.142.233.1/24"
 	clientConfig := fmt.Sprintf(
 		`[Interface]
 Address = %s
