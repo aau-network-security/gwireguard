@@ -2,6 +2,7 @@ wireguard-config:
   eth: eth0
   # dir is the place where configuration files of wg are located.
   dir: /etc/wireguard/
+  wgITempFile: /home/vagrant/wireguard-server/intesrface.tmpl
 
 service-config:
   domain:
