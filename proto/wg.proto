@@ -57,6 +57,7 @@ message IReq {
     string privateKey = 4;
     string eth = 5;
     string iName = 6;
+    string downInterfacesFile = 7;
 }
 message IResp {
     // message could be error or ordinary result depend on function result.

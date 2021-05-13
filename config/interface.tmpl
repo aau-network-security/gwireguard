@@ -1,0 +1,9 @@
+[Interface]
+Address = {{.Address}}
+ListenPort = {{.ListenPort}}
+SaveConfig = {{.SaveConfig}}
+PrivateKey = {{.PrivateKey}}
+{{range .IPRules}}
+PostUp = iptables -A FORWARD -i {{.WgInterfaceName}} -j ACCEPT;  iptables -A FORWARD -o {{.WgInterfaceName}} -j ACCEPT;iptables -t nat -A POSTROUTING -o {{.HostInterfaceName}} -j MASQUERADE
+PostDown =  iptables -D FORWARD -i {{.WgInterfaceName}} -j ACCEPT;  iptables -A FORWARD -o {{.WgInterfaceName}} -j ACCEPT;iptables -t nat -D POSTROUTING -o {{.HostInterfaceName}} -j MASQUERADE
+{{end}}

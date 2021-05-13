@@ -1,6 +1,7 @@
 package wg
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"io"
@@ -9,6 +10,7 @@ import (
 	"os/exec"
 	"strconv"
 	"strings"
+	"text/template"
 
 	"github.com/rs/zerolog/log"
 
@@ -32,18 +34,32 @@ var (
 )
 
 type Interface struct {
-	address    string // subnet
-	saveConfig bool
-	listenPort uint32
-	privateKey string
-	eth        string
-	iName      string
+	address            string // subnet
+	saveConfig         bool
+	listenPort         uint32
+	privateKey         string
+	eth                string
+	iName              string
+	downInterfacesFile string
 }
 
 type Peer struct {
 	publicKey  string
 	allowedIPs string
 	endPoint   string
+}
+
+type WGInterface struct {
+	Address    string
+	ListenPort uint32
+	SaveConfig bool
+	PrivateKey string
+	IPRules    []IPRuleForWG
+}
+
+type IPRuleForWG struct {
+	WgInterfaceName   string
+	HostInterfaceName string
 }
 
 // addPeer will add peer to VPN server
@@ -195,19 +211,40 @@ func getContent(keyName string) (string, error) {
 
 // will generate configuration file regarding to wireguard interface
 func genInterfaceConf(i Interface, confPath string) (string, error) {
+	var ipRules []IPRuleForWG
+	var hostInterfaces []string
+
+	// and pass it to WGInterface
+	if i.downInterfacesFile != "" {
+		// read interfaces from a file
+		dat, err := ioutil.ReadFile(i.downInterfacesFile)
+		if err != nil {
+			return "", err
+		}
+		hostInterfaces = strings.Split(string(dat), ",")
+		for _, hostI := range hostInterfaces {
+			ipRules = append(ipRules, IPRuleForWG{
+				WgInterfaceName:   i.iName,
+				HostInterfaceName: hostI,
+			})
+		}
+	} else {
+		ipRules = append(ipRules, IPRuleForWG{
+			WgInterfaceName:   i.iName,
+			HostInterfaceName: "eth0",
+		})
+	}
+
+	wgI := WGInterface{
+		Address:    i.address,
+		ListenPort: i.listenPort,
+		SaveConfig: false,
+		PrivateKey: i.privateKey,
+		IPRules:    ipRules,
+	}
+	wgConf := createWGIContent(wgI, configuration.WgConfig.WGInterfaceTemplate)
+
 	log.Info().Msgf("Generating interface configuration file for event %s", i.iName)
-	upRule := "iptables -A FORWARD -i %i -j ACCEPT;  iptables -A FORWARD -o %i -j ACCEPT;"
-	downRule := "iptables -D FORWARD -i %i -j ACCEPT; iptables -A FORWARD -o %i -j ACCEPT;"
-	wgConf := fmt.Sprintf(
-		`
-		[Interface]
-		Address = %s
-		ListenPort = %d
-		SaveConfig = %v
-		PrivateKey = %s
-		PostUp = %siptables -t nat -A POSTROUTING -o %s -j MASQUERADE
-		PostDown = %siptables -t nat -D POSTROUTING -o %s -j MASQUERADE`, i.address, i.listenPort, i.saveConfig, i.privateKey,
-		upRule, i.eth, downRule, i.eth)
 
 	if err := writeToFile(confPath+i.iName+".conf", wgConf); err != nil {
 		return "GenInterface Error:  ", err
@@ -223,6 +260,14 @@ func WireGuardCmd(cmd string) ([]byte, error) {
 		return nil, err
 	}
 	return out, nil
+}
+
+func createWGIContent(interfaces WGInterface, templatePath string) string {
+
+	var tpl bytes.Buffer
+	tmpl := template.Must(template.ParseFiles(templatePath))
+	tmpl.Execute(&tpl, interfaces)
+	return tpl.String()
 }
 
 func writeToFile(filename string, data string) error {

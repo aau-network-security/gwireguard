@@ -9,8 +9,9 @@ import (
 
 type Config struct {
 	WgConfig struct {
-		Eth string `yaml:"eth"`
-		Dir string `yaml:"dir"`
+		Eth                 string `yaml:"eth"`
+		Dir                 string `yaml:"dir"`
+		WGInterfaceTemplate string `yaml:"wg-interface-temp"`
 	} `yaml:"wireguard-config"`
 	ServiceConfig struct {
 		Domain struct {

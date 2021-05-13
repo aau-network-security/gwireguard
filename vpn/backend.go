@@ -40,13 +40,15 @@ func (w *wireguard) InitializeI(ctx context.Context, r *pb.IReq) (*pb.IResp, err
 	}
 
 	wgI := Interface{
-		address:    r.Address,
-		listenPort: r.ListenPort,
-		privateKey: privKey,
-		eth:        r.Eth,
-		saveConfig: r.SaveConfig,
-		iName:      r.IName,
+		address:            r.Address,
+		listenPort:         r.ListenPort,
+		privateKey:         privKey,
+		eth:                r.Eth,
+		saveConfig:         r.SaveConfig,
+		iName:              r.IName,
+		downInterfacesFile: r.DownInterfacesFile,
 	}
+
 	out, err := genInterfaceConf(wgI, w.config.WgConfig.Dir)
 	if err != nil {
 		return &pb.IResp{Message: out}, err
