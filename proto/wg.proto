@@ -1,6 +1,9 @@
-syntax="proto3";
+syntax = "proto3";
 
 // todo: GenInterface
+
+option go_package = "github.com/aau-network-security/gwireguard/proto";
+
 
 service Wireguard {
 
@@ -75,7 +78,7 @@ message DelPResp {
 }
 
 message ManageNICReq {
-//    manage NIC is responsible to up and down given interface
+    //    manage NIC is responsible to up and down given interface
     string nic = 1;
     string cmd = 2; // up or down
 }
