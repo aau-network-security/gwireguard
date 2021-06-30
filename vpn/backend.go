@@ -24,6 +24,7 @@ import (
 type wireguard struct {
 	auth   Authenticator
 	config *config.Config
+	pb.UnimplementedWireguardServer
 }
 
 // InitializeI creates interface configuration and make it UP.
