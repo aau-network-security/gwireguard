@@ -30,7 +30,9 @@ const (
 
 var (
 	// todo: fix configuration variables
-	configuration, _ = config.NewConfig(os.Getenv("CONFIG_PATH"))
+	//variablesvariablesΩos.Setenv("FOO", "1")
+	configPath       = getConfigPath()
+	configuration, _ = config.NewConfig(configPath)
 )
 
 type Interface struct {
@@ -163,6 +165,7 @@ func generatePublicKey(ctx context.Context, privateKeyName, publicKeyName string
 	out, err := exec.CommandContext(ctx, "bash", "-c", cmd).Output()
 	if err != nil {
 		return fmt.Errorf("failed to execute command: %s", cmd)
+
 	}
 
 	if err := writeToFile(publicKeyName, string(out)); err != nil {
@@ -179,6 +182,7 @@ func upDown(nic, cmd string) (string, error) {
 	log.Info().Msgf("Interface %s is called to be %s", nic, cmd)
 	_, err := WireGuardCmd(command)
 	if err != nil {
+
 		return "", fmt.Errorf("failed to execute command: %s error: %v", command, err)
 	}
 	return "Interface " + nic + " is " + cmd, nil
@@ -202,6 +206,7 @@ func generatePrivateKey(privateKeyName string) (string, error) {
 
 // getContent returns content of privateKey or publicKey depending on keyName
 func getContent(keyName string) (string, error) {
+
 	out, err := ioutil.ReadFile(configuration.WgConfig.Dir + keyName)
 	if err != nil {
 		return "", fmt.Errorf("could not read the file %s err: %v", keyName, err)
@@ -223,9 +228,10 @@ func genInterfaceConf(i Interface, confPath string) (string, error) {
 		}
 		hostInterfaces = strings.Split(string(dat), ",")
 		for _, hostI := range hostInterfaces {
+			hostClean := strings.Replace(hostI, "\n", "", -1)
 			ipRules = append(ipRules, IPRuleForWG{
 				WgInterfaceName:   i.iName,
-				HostInterfaceName: hostI,
+				HostInterfaceName: hostClean,
 			})
 		}
 	} else {
@@ -242,6 +248,7 @@ func genInterfaceConf(i Interface, confPath string) (string, error) {
 		PrivateKey: i.privateKey,
 		IPRules:    ipRules,
 	}
+
 	wgConf := createWGIContent(wgI, configuration.WgConfig.WGInterfaceTemplate)
 
 	log.Info().Msgf("Generating interface configuration file for event %s", i.iName)
@@ -282,4 +289,15 @@ func writeToFile(filename string, data string) error {
 		return err
 	}
 	return file.Sync()
+}
+
+//helper function to always get the correct config path
+func getConfigPath() string {
+	dir, err := os.Getwd() // get working directory
+	if err != nil {
+		log.Error().Msgf("Error getting the working dir %v", err)
+	}
+	fullPathToconfig := fmt.Sprintf("%s%s", dir, "/config/config.yml")
+
+	return fullPathToconfig
 }
