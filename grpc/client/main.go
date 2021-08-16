@@ -6,7 +6,7 @@ import (
 	"log"
 
 	wg "github.com/aau-network-security/gwireguard/proto"
-	"github.com/dgrijalva/jwt-go"
+	"github.com/golang-jwt/jwt"
 
 	"google.golang.org/grpc"
 )
@@ -28,7 +28,7 @@ func (c Creds) RequireTransportSecurity() bool {
 
 func main() {
 	// change the endpoint address with your instance ip
-	endpointAddress := "40.127.143.202"
+	endpointAddress := "localhost"
 	var conn *grpc.ClientConn
 	// wg is AUTH_KEY from vpn/auth.go
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
@@ -68,10 +68,11 @@ func main() {
 		DownInterfacesFile: "/etc/network/downinterfaces",
 	})
 	if err != nil {
+		fmt.Println("Error while initializing interface")
 		panic(err)
 	}
 
-	//log.Info().Msg("Getting server public key...")
+	fmt.Println("Getting server public key...")
 	serverPubKey, err := client.GetPublicKey(ctx, &wg.PubKeyReq{PubKeyName: "wg", PrivKeyName: "wg"})
 	if err != nil {
 		panic(err)

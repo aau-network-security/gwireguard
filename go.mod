@@ -3,7 +3,7 @@ module github.com/aau-network-security/gwireguard
 go 1.13
 
 require (
-	github.com/dgrijalva/jwt-go v3.2.0+incompatible
+	github.com/golang-jwt/jwt v3.2.2+incompatible // indirect
 	github.com/rs/zerolog v1.19.0
 	golang.org/x/net v0.0.0-20210614182718-04defd469f4e // indirect
 	golang.org/x/sys v0.0.0-20210630005230-0f9fa26af87c // indirect
