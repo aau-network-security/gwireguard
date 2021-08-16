@@ -31,8 +31,9 @@ const (
 var (
 	// todo: fix configuration variables
 	//variablesvariablesΩos.Setenv("FOO", "1")
-	configPath       = getConfigPath()
-	configuration, _ = config.NewConfig(configPath)
+	configuration, _ = config.NewConfig(os.Getenv("CONFIG_PATH"))
+	//configPath       = getConfigPath()
+	//configuration, _ = config.NewConfig(configPath)
 )
 
 type Interface struct {
@@ -185,6 +186,7 @@ func upDown(nic, cmd string) (string, error) {
 
 		return "", fmt.Errorf("failed to execute command: %s error: %v", command, err)
 	}
+
 	return "Interface " + nic + " is " + cmd, nil
 }
 
@@ -300,4 +302,8 @@ func getConfigPath() string {
 	fullPathToconfig := fmt.Sprintf("%s%s", dir, "/config/config.yml")
 
 	return fullPathToconfig
+}
+
+func init() {
+	getConfigPath()
 }

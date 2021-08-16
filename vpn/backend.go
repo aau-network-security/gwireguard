@@ -33,6 +33,7 @@ func (w *wireguard) InitializeI(ctx context.Context, r *pb.IReq) (*pb.IResp, err
 	log.Info().Msgf("Initializing interface for %s ", r.IName)
 	privKey, err := generatePrivateKey(w.config.WgConfig.Dir + r.IName + "_priv")
 	if err != nil {
+		log.Error().Err(err).Str("privatekey: ", privKey).Msg("Problem in generating the privatekey")
 		return &pb.IResp{}, err
 	}
 	log.Info().Msgf("Private key is generated %s with name %s", w.config.WgConfig.Dir, r.IName)
@@ -52,11 +53,16 @@ func (w *wireguard) InitializeI(ctx context.Context, r *pb.IReq) (*pb.IResp, err
 
 	out, err := genInterfaceConf(wgI, w.config.WgConfig.Dir)
 	if err != nil {
+		log.Error().Err(err).Str("interface:%s ", wgI.iName).Msg("Problem in configuration of the interface")
+
 		return &pb.IResp{Message: out}, fmt.Errorf("Problem in configuration of the interface -- %v", err)
 	}
 
 	out, err = upDown(r.IName, "up")
+
 	if err != nil {
+
+		log.Error().Err(err).Str("interface: ", out).Msg("Problem in making the interface UP")
 		return &pb.IResp{Message: out}, fmt.Errorf("PROBLEM IN THE FUNCTION upDown -- %v", err)
 	}
 	log.Debug().Str("Address: ", r.Address).
@@ -149,9 +155,11 @@ func (w *wireguard) GenPublicKey(ctx context.Context, r *pb.PubKeyReq) (*pb.PubK
 	// check whether private key exists or not, if not generate one
 	if _, err := os.Stat(w.config.WgConfig.Dir + r.PrivKeyName + "_pub"); os.IsNotExist(err) {
 		fmt.Printf("PrivateKeyFile is not exists, creating one ... %s\n", r.PrivKeyName)
-		_, err := generatePrivateKey(w.config.WgConfig.Dir + r.PrivKeyName + "_priv")
+		privKey, err := generatePrivateKey(w.config.WgConfig.Dir + r.PrivKeyName + "_priv")
 		if err != nil {
+			log.Error().Err(err).Str("Privatekey: %s ", privKey).Msg("Problem in generation of private key")
 			return &pb.PubKeyResp{Message: "Error"}, fmt.Errorf("error in generation of private key %v", err)
+
 		}
 	}
 
