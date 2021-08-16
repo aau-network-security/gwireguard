@@ -155,11 +155,9 @@ func (w *wireguard) GenPublicKey(ctx context.Context, r *pb.PubKeyReq) (*pb.PubK
 	// check whether private key exists or not, if not generate one
 	if _, err := os.Stat(w.config.WgConfig.Dir + r.PrivKeyName + "_pub"); os.IsNotExist(err) {
 		fmt.Printf("PrivateKeyFile is not exists, creating one ... %s\n", r.PrivKeyName)
-		privKey, err := generatePrivateKey(w.config.WgConfig.Dir + r.PrivKeyName + "_priv")
+		_, err := generatePrivateKey(w.config.WgConfig.Dir + r.PrivKeyName + "_priv")
 		if err != nil {
-			log.Error().Err(err).Str("Privatekey: %s ", privKey).Msg("Problem in generation of private key")
 			return &pb.PubKeyResp{Message: "Error"}, fmt.Errorf("error in generation of private key %v", err)
-
 		}
 	}
 
