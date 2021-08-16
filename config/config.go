@@ -11,7 +11,7 @@ type Config struct {
 	WgConfig struct {
 		Eth                 string `yaml:"eth"`
 		Dir                 string `yaml:"dir"`
-		WGInterfaceTemplate string `yaml:"wg-interface-temp"`
+		WGInterfaceTemplate string `yaml:"wgITempFile"`
 	} `yaml:"wireguard-config"`
 	ServiceConfig struct {
 		Domain struct {

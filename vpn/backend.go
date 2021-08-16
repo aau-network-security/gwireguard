@@ -33,6 +33,7 @@ func (w *wireguard) InitializeI(ctx context.Context, r *pb.IReq) (*pb.IResp, err
 	log.Info().Msgf("Initializing interface for %s ", r.IName)
 	privKey, err := generatePrivateKey(w.config.WgConfig.Dir + r.IName + "_priv")
 	if err != nil {
+		log.Error().Err(err).Str("keyFile", privKey).Msg("Problem generating the privatekey")
 		return &pb.IResp{}, err
 	}
 	log.Info().Msgf("Private key is generated %s with name %s", w.config.WgConfig.Dir, r.IName)
@@ -52,12 +53,17 @@ func (w *wireguard) InitializeI(ctx context.Context, r *pb.IReq) (*pb.IResp, err
 
 	out, err := genInterfaceConf(wgI, w.config.WgConfig.Dir)
 	if err != nil {
-		return &pb.IResp{Message: out}, err
+		log.Error().Err(err).Str("interface", wgI.iName).Msg("Problem in configuration of the interface")
+
+		return &pb.IResp{Message: out}, fmt.Errorf("Problem in configuration of the interface -- %v", err)
 	}
 
 	out, err = upDown(r.IName, "up")
+
 	if err != nil {
-		return &pb.IResp{Message: out}, err
+
+		log.Error().Err(err).Str("interface", out).Msg("Problem in making the interface UP")
+		return &pb.IResp{Message: out}, fmt.Errorf("PROBLEM IN THE FUNCTION upDown -- %v", err)
 	}
 	log.Debug().Str("Address: ", r.Address).
 		Uint32("ListenPort: ", r.ListenPort).
@@ -156,7 +162,7 @@ func (w *wireguard) GenPublicKey(ctx context.Context, r *pb.PubKeyReq) (*pb.PubK
 	}
 
 	if err := generatePublicKey(ctx, w.config.WgConfig.Dir+r.PrivKeyName+"_priv", w.config.WgConfig.Dir+r.PubKeyName+"_pub"); err != nil {
-		return &pb.PubKeyResp{}, err
+		return &pb.PubKeyResp{Message: "Error"}, fmt.Errorf("error in generation of public key %v", err)
 	}
 	return &pb.PubKeyResp{Message: "Public key is generated with " + w.config.WgConfig.Dir + r.PubKeyName + " name"}, nil
 }
