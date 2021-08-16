@@ -33,7 +33,7 @@ func (w *wireguard) InitializeI(ctx context.Context, r *pb.IReq) (*pb.IResp, err
 	log.Info().Msgf("Initializing interface for %s ", r.IName)
 	privKey, err := generatePrivateKey(w.config.WgConfig.Dir + r.IName + "_priv")
 	if err != nil {
-		log.Error().Err(err).Str("privatekey: ", privKey).Msg("Problem in generating the privatekey")
+		log.Error().Err(err).Str("keyFile", privKey).Msg("Problem generating the privatekey")
 		return &pb.IResp{}, err
 	}
 	log.Info().Msgf("Private key is generated %s with name %s", w.config.WgConfig.Dir, r.IName)
@@ -53,7 +53,7 @@ func (w *wireguard) InitializeI(ctx context.Context, r *pb.IReq) (*pb.IResp, err
 
 	out, err := genInterfaceConf(wgI, w.config.WgConfig.Dir)
 	if err != nil {
-		log.Error().Err(err).Str("interface:%s ", wgI.iName).Msg("Problem in configuration of the interface")
+		log.Error().Err(err).Str("interface", wgI.iName).Msg("Problem in configuration of the interface")
 
 		return &pb.IResp{Message: out}, fmt.Errorf("Problem in configuration of the interface -- %v", err)
 	}
@@ -62,7 +62,7 @@ func (w *wireguard) InitializeI(ctx context.Context, r *pb.IReq) (*pb.IResp, err
 
 	if err != nil {
 
-		log.Error().Err(err).Str("interface: ", out).Msg("Problem in making the interface UP")
+		log.Error().Err(err).Str("interface", out).Msg("Problem in making the interface UP")
 		return &pb.IResp{Message: out}, fmt.Errorf("PROBLEM IN THE FUNCTION upDown -- %v", err)
 	}
 	log.Debug().Str("Address: ", r.Address).
