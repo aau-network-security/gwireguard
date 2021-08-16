@@ -52,6 +52,7 @@ func (w *wireguard) InitializeI(ctx context.Context, r *pb.IReq) (*pb.IResp, err
 
 	out, err := genInterfaceConf(wgI, w.config.WgConfig.Dir)
 	if err != nil {
+                log.Error().Err(err).Str("interface",wgI)(Msg("Problem in configuration of the interface")
 		return &pb.IResp{Message: out}, fmt.Errorf("Problem in configuration of the interface -- %v", err)
 	}
 
