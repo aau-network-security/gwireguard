@@ -64,9 +64,9 @@ func addPeer(nic, publicKey, allowedIPs string) (string, error) {
 
 // removePeer will remove peer from VPN server
 // wg rm <peer-public-key> allowed-ips 192.168.0.2/32
-func removePeer(peerPublicKey, ipAddress string) (string, error) {
-	log.Debug().Msgf("Peer with publickey { %s } is removing from %s", peerPublicKey, ipAddress)
-	cmd := wgManageBin + " rm " + peerPublicKey + " allowed-ips " + ipAddress
+func removePeer(peerPublicKey, nic string) (string, error) {
+	log.Debug().Msgf("Peer with publickey { %s } is being removed", peerPublicKey)
+	cmd := wgManageBin + " set " + nic + " peer " + peerPublicKey + " remove"
 	//_, err := WireGuardCmd(context.Background(), wgManageBin, "rm", peerPublicKey, "allowed-ips", ipAddress)
 	_, err := WireGuardCmd(cmd)
 	if err != nil {

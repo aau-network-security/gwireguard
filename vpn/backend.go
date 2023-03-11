@@ -24,6 +24,7 @@ import (
 type wireguard struct {
 	auth   Authenticator
 	config *config.Config
+	pb.UnimplementedWireguardServer
 }
 
 // InitializeI creates interface configuration and make it UP.
@@ -80,11 +81,11 @@ func (w *wireguard) AddPeer(ctx context.Context, r *pb.AddPReq) (*pb.AddPResp, e
 
 // DelPeer deletes peer from given wireguard interface
 func (w *wireguard) DelPeer(ctx context.Context, r *pb.DelPReq) (*pb.DelPResp, error) {
-	out, err := removePeer(r.PeerPublicKey, r.IpAddress)
+	out, err := removePeer(r.PeerPublicKey, r.Nic)
 	if err != nil {
 		return &pb.DelPResp{Message: out}, err
 	}
-	log.Info().Msgf("Peer with public key: { %s } is deleted from ip-address: { %s }", r.PeerPublicKey, r.IpAddress)
+	log.Info().Msgf("Peer with public key: { %s } is deleted from ip-address: { %s }", r.PeerPublicKey, r.Nic)
 	return &pb.DelPResp{Message: out}, nil
 }
 

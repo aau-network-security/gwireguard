@@ -1,5 +1,5 @@
 syntax="proto3";
-
+option go_package = "github.com/aau-network-security/gwireguard/proto";
 // todo: GenInterface
 
 service Wireguard {
@@ -66,7 +66,7 @@ message IResp {
 
 message DelPReq {
     string peerPublicKey = 1;
-    string ipAddress  = 2;
+    string nic  = 2;
 }
 
 message DelPResp {
